@@ -164,42 +164,6 @@ export default {
   'POST /api/register': (_req: Request, res: Response) => {
     res.send({ status: 'ok', currentAuthority: 'user', success: true });
   },
-  'GET /api/500': (_req: Request, res: Response) => {
-    res.status(500).send({
-      timestamp: 1513932555104,
-      status: 500,
-      error: 'error',
-      message: 'error',
-      path: '/base/category/list',
-    });
-  },
-  'GET /api/404': (_req: Request, res: Response) => {
-    res.status(404).send({
-      timestamp: 1513932643431,
-      status: 404,
-      error: 'Not Found',
-      message: 'No message available',
-      path: '/base/category/list/2121212',
-    });
-  },
-  'GET /api/403': (_req: Request, res: Response) => {
-    res.status(403).send({
-      timestamp: 1513932555104,
-      status: 403,
-      error: 'Forbidden',
-      message: 'Forbidden',
-      path: '/base/category/list',
-    });
-  },
-  'GET /api/401': (_req: Request, res: Response) => {
-    res.status(401).send({
-      timestamp: 1513932555104,
-      status: 401,
-      error: 'Unauthorized',
-      message: 'Unauthorized',
-      path: '/base/category/list',
-    });
-  },
-
-  'GET  /api/login/captcha': getFakeCaptcha,
+  // Normalización de espacio en la clave del endpoint
+  'GET /api/login/captcha': getFakeCaptcha,
 };

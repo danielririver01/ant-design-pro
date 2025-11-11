@@ -1,4 +1,4 @@
-﻿import { defaultConfig } from 'antd/lib/theme/internal';
+import { defaultConfig } from 'antd/lib/theme/internal';
 
 defaultConfig.hashed = false;
 
@@ -27,6 +27,18 @@ class Worker {
   }
 }
 window.Worker = Worker;
+
+// Mock de ResizeObserver para componentes que dependen de observación de tamaño
+// (Ant Design, Recharts y libs relacionadas)
+class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line no-undef
+  window.ResizeObserver = ResizeObserver;
+}
 
 if (typeof window !== 'undefined') {
   // ref: https://github.com/ant-design/ant-design/issues/18774
@@ -69,3 +81,11 @@ Object.defineProperty(global.window.console, 'error', {
     errorLog(...rest);
   },
 });
+
+// Asegurar React disponible a nivel global en ambiente de pruebas
+// para bibliotecas que aún esperan React en el scope
+// (compatibilidad con transformaciones JSX en Jest)
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+// Exponer React globalmente para evitar errores "React is not defined"
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+global.React = require('react');

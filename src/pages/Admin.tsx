@@ -1,51 +1,39 @@
-import { HeartTwoTone, SmileTwoTone } from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
-import { useIntl } from '@umijs/max';
-import { Alert, Card, Typography } from 'antd';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { PageContainer, ProCard } from '@ant-design/pro-components';
+import { Statistic, Row, Col } from 'antd';
+import { request } from '@umijs/max';
 
-const Admin: React.FC = () => {
-  const intl = useIntl();
+const AdminPage: React.FC = () => {
+  const [kpis, setKpis] = useState<{ orders: number; revenue: number; clients: number }>({ orders: 0, revenue: 0, clients: 0 });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await request('/kpis', { method: 'GET' });
+        setKpis(res?.data || { orders: 0, revenue: 0, clients: 0 });
+      } catch (e) {
+        // Silenciar en primera carga
+      }
+    })();
+  }, []);
+
   return (
-    <PageContainer
-      content={intl.formatMessage({
-        id: 'pages.admin.subPage.title',
-        defaultMessage: 'This page can only be viewed by admin',
-      })}
-    >
-      <Card>
-        <Alert
-          message={intl.formatMessage({
-            id: 'pages.welcome.alertMessage',
-            defaultMessage:
-              'Faster and stronger heavy-duty components have been released.',
-          })}
-          type="success"
-          showIcon
-          banner
-          style={{
-            margin: -12,
-            marginBottom: 48,
-          }}
-        />
-        <Typography.Title level={2} style={{ textAlign: 'center' }}>
-          <SmileTwoTone /> Ant Design Pro{' '}
-          <HeartTwoTone twoToneColor="#eb2f96" /> You
-        </Typography.Title>
-      </Card>
-      <p style={{ textAlign: 'center', marginTop: 24 }}>
-        Want to add more pages? Please refer to{' '}
-        <a
-          href="https://pro.ant.design/docs/block-cn"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          use block
-        </a>
-        。
-      </p>
+    <PageContainer title="Panel Administrativo">
+      <ProCard>
+        <Row gutter={16}>
+          <Col xs={24} sm={8}>
+            <Statistic title="Pedidos" value={kpis.orders} />
+          </Col>
+          <Col xs={24} sm={8}>
+            <Statistic title="Clientes" value={kpis.clients} />
+          </Col>
+          <Col xs={24} sm={8}>
+            <Statistic title="Ingresos" prefix="$" value={kpis.revenue} precision={2} />
+          </Col>
+        </Row>
+      </ProCard>
     </PageContainer>
   );
 };
 
-export default Admin;
+export default AdminPage;

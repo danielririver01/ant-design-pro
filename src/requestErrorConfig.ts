@@ -1,8 +1,9 @@
-﻿import type { RequestOptions } from '@@/plugin-request/request';
+import type { RequestOptions } from '@@/plugin-request/request';
 import type { RequestConfig } from '@umijs/max';
-import { message, notification } from 'antd';
+import { MessageProxy, NotificationProxy } from '@/shared/antd_app_bridge';
+import { getAccessToken } from '@/shared/auth/tokenMemory';
+import { refreshAccessToken } from '@/shared/auth/refresh';
 
-// 错误处理方案： 错误类型
 enum ErrorShowType {
   SILENT = 0,
   WARN_MESSAGE = 1,
@@ -10,99 +11,147 @@ enum ErrorShowType {
   NOTIFICATION = 3,
   REDIRECT = 9,
 }
-// 与后端约定的响应数据格式
+
 interface ResponseStructure {
   success: boolean;
   data: any;
-  errorCode?: number;
+  errorCode?: string | number;
   errorMessage?: string;
   showType?: ErrorShowType;
 }
 
 /**
  * @name 错误处理
- * pro 自带的错误处理， 可以在这里做自己的改动
+ * pro 自带的错误处理， 可以在自己的改动
  * @doc https://umijs.org/docs/max/request#配置
  */
 export const errorConfig: RequestConfig = {
-  // 错误处理： umi@3 的错误处理方案。
+  // ✅ IMPORTANTE: Incluir credenciales (cookies) en peticiones
+  credentials: 'include',
+
   errorConfig: {
     // 错误抛出
     errorThrower: (res) => {
       const { success, data, errorCode, errorMessage, showType } =
         res as unknown as ResponseStructure;
-      if (!success) {
-        const error: any = new Error(errorMessage);
+
+      // Ajuste de compatibilidad:
+      // Muchos endpoints del backend devuelven solo { data } con HTTP 200
+      // sin el campo `success`. No debemos tratar eso como error.
+      const successIsBoolean = typeof success === 'boolean';
+      const isExplicitBizError = successIsBoolean && success === false;
+      const isAuthError = errorCode === '401' || errorCode === 401;
+
+      if (isExplicitBizError || isAuthError) {
+        const error: any = new Error(errorMessage || '请求失败');
         error.name = 'BizError';
         error.info = { errorCode, errorMessage, showType, data };
-        throw error; // 抛出自制的错误
+        throw error;
       }
+      // En el resto de casos, no lanzar: dejar que el manejador HTTP trate códigos != 2xx
     },
+
     // 错误接收及处理
     errorHandler: (error: any, opts: any) => {
       if (opts?.skipErrorHandler) throw error;
-      // 我们的 errorThrower 抛出的错误。
+
+      // 我们的 errorThrower 抛出的错误
       if (error.name === 'BizError') {
         const errorInfo: ResponseStructure | undefined = error.info;
         if (errorInfo) {
           const { errorMessage, errorCode } = errorInfo;
+
+          // ✅ MANEJO ESPECIAL: Error 401 (no autenticado)
+          if (errorCode === '401' || errorCode === 401) {
+            // Intentar refrescar en caliente; si no se puede, limpiar y redirigir
+            refreshAccessToken().then((ok) => {
+              if (!ok) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('token');
+                const urlStr = error.request?.url || '';
+                // Evitar redirección inmediata para peticiones de carga de usuario
+                const isCurrentUserRequest = urlStr.includes('/currentUser') || urlStr.includes('/auth/me');
+                if (!isCurrentUserRequest) {
+                  MessageProxy.warning(errorMessage || '请先登录！');
+                  setTimeout(() => {
+                    window.location.href = '/user/login';
+                  }, 1000);
+                }
+              }
+            });
+            return;
+          }
+
+          // Manejo normal de errores según showType
           switch (errorInfo.showType) {
             case ErrorShowType.SILENT:
               // do nothing
               break;
             case ErrorShowType.WARN_MESSAGE:
-              message.warning(errorMessage);
+              MessageProxy.warning(errorMessage);
               break;
             case ErrorShowType.ERROR_MESSAGE:
-              message.error(errorMessage);
+              MessageProxy.error(errorMessage);
               break;
             case ErrorShowType.NOTIFICATION:
-              notification.open({
+              NotificationProxy.open({
                 description: errorMessage,
-                message: errorCode,
+                message: String(errorCode),
               });
               break;
             case ErrorShowType.REDIRECT:
               // TODO: redirect
               break;
             default:
-              message.error(errorMessage);
+              MessageProxy.error(errorMessage || 'Error en la solicitud');
           }
         }
       } else if (error.response) {
-        // Axios 的错误
-        // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-        message.error(`Response status:${error.response.status}`);
+        // Error HTTP estándar
+        const { status } = error.response;
+        
+        if (status === 401) {
+          // Intentar refresh silencioso antes de redirigir
+          refreshAccessToken().then((ok) => {
+            if (!ok) {
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('token');
+              MessageProxy.error('Sesión expirada. Por favor, inicia sesión.');
+              setTimeout(() => {
+                window.location.href = '/user/login';
+              }, 1000);
+            }
+          });
+        } else {
+          MessageProxy.error(`Response status: ${status}`);
+        }
       } else if (error.request) {
-        // 请求已经成功发起，但没有收到响应
-        // \`error.request\` 在浏览器中是 XMLHttpRequest 的实例，
-        // 而在node.js中是 http.ClientRequest 的实例
-        message.error('None response! Please retry.');
+        MessageProxy.error('None response! Please retry.');
       } else {
-        // 发送请求时出了点问题
-        message.error('Request error, please retry.');
+        MessageProxy.error('Request error, please retry.');
       }
     },
   },
 
-  // 请求拦截器
+  /// Interceptor de solicitudes
   requestInterceptors: [
     (config: RequestOptions) => {
-      // 拦截请求配置，进行个性化处理。
-      const url = config?.url?.concat('?token=123');
-      return { ...config, url };
+      // Inyectar token JWT desde memoria; fallback a localStorage
+      const token = getAccessToken() || localStorage.getItem('access_token') || localStorage.getItem('token');
+      
+      const headers = {
+        ...(config.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      
+      return { ...config, headers };
     },
   ],
 
-  // 响应拦截器
   responseInterceptors: [
     (response) => {
-      // 拦截响应数据，进行个性化处理
-      const { data } = response as unknown as ResponseStructure;
-
-      if (data?.success === false) {
-        message.error('请求失败！');
-      }
+      // Ya no necesitamos verificar data.success aquí
+      // El errorThrower lo maneja
       return response;
     },
   ],

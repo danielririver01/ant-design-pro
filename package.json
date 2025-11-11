@@ -17,6 +17,7 @@
     "lint-staged": "lint-staged",
     "biome:lint": "npx @biomejs/biome lint",
     "openapi": "max openapi",
+    "mock:check": "ts-node tools/mock_checker/check_duplicates.ts",
     "prepare": "husky",
     "preview": "npm run build && max preview --port 8000",
     "record": "cross-env NODE_ENV=development UMI_ENV=test max record --scene=login",
@@ -36,28 +37,34 @@
   ],
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
+    "@ant-design/plots": "^2.6.6",
     "@ant-design/pro-components": "^2.8.9",
-    "antd": "^5.26.4",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
+    "antd": "^5.26.4",
     "antd-style": "^3.7.0",
     "classnames": "^2.5.1",
     "dayjs": "^1.11.13",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-icons": "^5.5.0",
+    "recharts": "^3.4.1"
   },
   "devDependencies": {
     "@ant-design/pro-cli": "^3.3.0",
+    "@biomejs/biome": "^2.1.1",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.13",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/react-helmet": "^6.1.11",
     "@umijs/max": "^4.3.24",
-    "cross-env": "^10.0.0",
+    "cross-env": "^10.1.0",
     "express": "^4.21.1",
     "gh-pages": "^6.1.1",
     "husky": "^9.1.7",
@@ -68,9 +75,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "umi-presets-pro": "^2.0.3",
-    "umi-serve": "^1.9.11",
-    "@biomejs/biome": "^2.1.1",
-    "@types/node": "^24.0.13"
+    "umi-serve": "^1.9.11"
   },
   "engines": {
     "node": ">=20.0.0"

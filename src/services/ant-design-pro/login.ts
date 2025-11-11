@@ -11,11 +11,17 @@ export async function getFakeCaptcha(
   },
   options?: { [key: string]: any },
 ) {
-  return request<API.FakeCaptcha>('/api/login/captcha', {
+  // Usar fetch para evitar depender del sistema de plugins de Umi durante la petición
+  const url = new URL('/api/login/captcha', window.location.origin);
+  if (params?.phone) url.searchParams.set('phone', String(params.phone));
+  const resp = await fetch(url.toString(), {
     method: 'GET',
-    params: {
-      ...params,
-    },
     ...(options || {}),
-  });
+  } as RequestInit);
+  try {
+    const data = await resp.json();
+    return data as any;
+  } catch (_) {
+    return { status: resp.status } as any;
+  }
 }

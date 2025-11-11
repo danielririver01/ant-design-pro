@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @name umi 的路由配置
  * @description 只支持 path,component,routes,redirect,wrappers,name,icon 的配置
  * @param path  path 只支持两种占位符配置，第一种是动态参数 :id 的形式，第二种是 * 通配符，通配符只能出现路由字符串的最后。
@@ -23,10 +23,44 @@ export default [
     ],
   },
   {
-    path: '/welcome',
-    name: 'welcome',
-    icon: 'smile',
-    component: './Welcome',
+    path: '/clients',
+    name: 'clients',
+    icon: 'user',
+    component: './clients',
+    access: 'isAuthenticated',
+    wrappers: ['@/wrappers/authGuard'],
+  },
+  {
+    path: '/orders',
+    name: 'orders',
+    icon: 'profile',
+    component: './orders',
+    access: 'isAuthenticated',
+    wrappers: ['@/wrappers/authGuard'],
+  },
+  {
+    path: '/products',
+    name: 'products',
+    icon: 'shopping',
+    component: './products',
+    access: 'isAuthenticated',
+    wrappers: ['@/wrappers/authGuard'],
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    icon: 'user',
+    component: './profile',
+    access: 'isAuthenticated',
+    wrappers: ['@/wrappers/authGuard'],
+  },
+  {
+    path: '/dashboard/analysis',
+    name: 'Análisis',
+    icon: 'dashboard',
+    component: './Dashboard/Analysis',
+    access: 'isAuthenticated',
+    wrappers: ['@/wrappers/authGuard'],
   },
   {
     path: '/admin',
@@ -50,14 +84,16 @@ export default [
     icon: 'table',
     path: '/list',
     component: './table-list',
+    access: 'isAuthenticated',
+    wrappers: ['@/wrappers/authGuard'],
   },
   {
     path: '/',
-    redirect: '/welcome',
+    redirect: '/user/login',
   },
   {
     component: '404',
     layout: false,
-    path: './*',
+    path: '*',
   },
 ];

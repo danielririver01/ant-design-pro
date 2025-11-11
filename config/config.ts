@@ -83,9 +83,9 @@ export default defineConfig({
    * @name layout 插件
    * @doc https://umijs.org/docs/max/layout-menu
    */
-  title: 'Ant Design Pro',
+  title: 'Velzia',
   layout: {
-    locale: true,
+    locale: false,  // ✅ CAMBIO: false para sincronizar con locale global
     ...defaultSettings,
   },
   /**
@@ -101,29 +101,14 @@ export default defineConfig({
    * @name 国际化插件
    * @doc https://umijs.org/docs/max/i18n
    */
-  locale: {
-    // default zh-CN
-    default: 'zh-CN',
-    antd: true,
-    // default true, when it is true, will use `navigator.language` overwrite default
-    baseNavigator: true,
-  },
+  // ✅ MANTENER: Deshabilitado para evitar conflictos
+  locale: false,
   /**
    * @name antd 插件
-   * @description 内置了 babel import 插件
+   * @description Deshabilitado para evitar error de runtime en applyPlugins. Usaremos ConfigProvider manualmente en app.tsx.
    * @doc https://umijs.org/docs/max/antd#antd
    */
-  antd: {
-    appConfig: {},
-    configProvider: {
-      theme: {
-        cssVar: true,
-        token: {
-          fontFamily: 'AlibabaSans, sans-serif',
-        },
-      },
-    },
-  },
+  antd: false,
   /**
    * @name 网络请求配置
    * @description 它基于 axios 和 ahooks 的 useRequest 提供了一套统一的网络请求和错误处理方案。
@@ -180,5 +165,9 @@ export default defineConfig({
   exportStatic: {},
   define: {
     'process.env.CI': process.env.CI,
+    // Control de verificación de suscripción desde el frontend.
+    // Por defecto desactivado en desarrollo para evitar 404 si el backend no expone el endpoint.
+    'process.env.SUBSCRIPTION_STATUS_CHECK': process.env.SUBSCRIPTION_STATUS_CHECK ?? 'false',
+    'process.env.SUBSCRIPTION_STATUS_URL': process.env.SUBSCRIPTION_STATUS_URL ?? '/api/subscription/status',
   },
 });

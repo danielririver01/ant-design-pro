@@ -4,6 +4,11 @@ import { SelectLang as UmiSelectLang } from '@umijs/max';
 export type SiderTheme = 'light' | 'dark';
 
 export const SelectLang: React.FC = () => {
+  // Si el plugin de locale está deshabilitado, UmiSelectLang puede ser undefined.
+  // Evitar error de React "Element type is invalid" devolviendo null.
+  if (!UmiSelectLang) {
+    return null;
+  }
   return (
     <UmiSelectLang
       style={{
